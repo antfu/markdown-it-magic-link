@@ -107,20 +107,19 @@ export default function MarkdownItMagicLink(md: MarkdownIt, options: MarkdownItM
     if (!parsed)
       return false
 
-    let resolved = {
-      class: [],
-      ...parsed,
-    } as ResolvedMagicLink
-
-    resolved.link = state.md.normalizeLink(parsed.link)
-    resolved.class.push('markdown-magic-link', `markdown-magic-link-${parsed.type}`)
-    resolved.text ||= resolved.link.replace(reHtmlProtocol, '')
-    resolved.imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(resolved.link || '').hostname}`
-
-    for (const handler of handlers)
-      resolved = handler.postprocess?.(resolved) || resolved
-
     if (!silent) {
+      let resolved = {
+        class: [],
+        ...parsed,
+      } as ResolvedMagicLink
+
+      resolved.link = state.md.normalizeLink(parsed.link)
+      resolved.class.push('markdown-magic-link', `markdown-magic-link-${parsed.type}`)
+      resolved.text ||= resolved.link.replace(reHtmlProtocol, '')
+      resolved.imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(resolved.link || '').hostname}`
+      for (const handler of handlers)
+        resolved = handler.postprocess?.(resolved) || resolved
+
       const token_o = state.push('link_open', 'a', 1)
       token_o.attrs = [
         ['href', resolved.link],
