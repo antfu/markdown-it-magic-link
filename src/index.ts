@@ -143,15 +143,15 @@ export default function MarkdownItMagicLink(md: MarkdownIt, options: MarkdownItM
       resolved.text ||= resolved.link.replace(reHtmlProtocol, '')
       resolved.imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(resolved.link || '').hostname}`
 
+      for (const handler of handlers)
+        resolved = handler.postprocess?.(resolved) || resolved
+
       for (const [regex, value] of options.imageOverrides || []) {
         if (typeof regex === 'string' ? resolved.link === regex : resolved.link.match(regex)) {
           resolved.imageUrl = value
           break
         }
       }
-
-      for (const handler of handlers)
-        resolved = handler.postprocess?.(resolved) || resolved
 
       const token_o = state.push('link_open', 'a', 1)
       token_o.attrs = [
