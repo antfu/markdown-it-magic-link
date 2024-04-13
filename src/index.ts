@@ -20,17 +20,33 @@ export interface MagicLinkHandler {
   postprocess?: (parsed: ResolvedMagicLink) => ResolvedMagicLink | void
 }
 
-export interface MarkdownItMagicLinkOptions {
-  handlers?: MagicLinkHandler[]
+export interface MagicLinkHandlerLinkOptions {
+  /**
+   * Map of link names to URLs. Case-sensitive.
+   *
+   * For example, `{ 'Google': 'https://google.com' }` will allow you to use `{Google}` in your markdown without specifying the URL
+   */
+  linksMap?: Record<string, string>
 }
 
-export function handlerLink(): MagicLinkHandler {
+export interface MarkdownItMagicLinkOptions extends MagicLinkHandlerLinkOptions {
+  handlers?: MagicLinkHandler[]
+
+  /**
+   * Array of RegExp and string pairs to override the default image URL
+   */
+  imageOverrides?: [RegExp | string, string][]
+}
+
+export function handlerLink(options?: MagicLinkHandlerLinkOptions): MagicLinkHandler {
   return {
     name: 'link',
     handler(content: string) {
       const parts = content.split('|').map(i => i.trim())
-      let text = parts.length > 1 ? parts[0] : undefined
-      const url = parts.length > 1 ? parts[1] : parts[0]
+      let text = parts[0]
+      const url = parts.length > 1
+        ? parts[1]
+        : (text ? options?.linksMap?.[text] : undefined) || parts[0]
       const type = 'link'
 
       if (!url.match(/^https?:\/\//))
@@ -86,7 +102,7 @@ export function parseMagicLink(content: string, handlers: MagicLinkHandler[]) {
 export default function MarkdownItMagicLink(md: MarkdownIt, options: MarkdownItMagicLinkOptions = {}) {
   const {
     handlers = [
-      handlerLink(),
+      handlerLink(options),
       handlerGitHubAt(),
     ],
   } = options
@@ -117,6 +133,14 @@ export default function MarkdownItMagicLink(md: MarkdownIt, options: MarkdownItM
       resolved.class.push('markdown-magic-link', `markdown-magic-link-${parsed.type}`)
       resolved.text ||= resolved.link.replace(reHtmlProtocol, '')
       resolved.imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(resolved.link || '').hostname}`
+
+      for (const [regex, value] of options.imageOverrides || []) {
+        if (resolved.link.match(regex)) {
+          resolved.imageUrl = value
+          break
+        }
+      }
+
       for (const handler of handlers)
         resolved = handler.postprocess?.(resolved) || resolved
 
