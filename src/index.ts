@@ -26,7 +26,7 @@ export interface MagicLinkHandlerLinkOptions {
    *
    * For example, `{ 'Google': 'https://google.com' }` will allow you to use `{Google}` in your markdown without specifying the URL
    */
-  linksMap?: Record<string, string>
+  linksMap?: Record<string, string | { link: string, imageUrl?: string }>
 }
 
 export interface MarkdownItMagicLinkOptions extends MagicLinkHandlerLinkOptions {
@@ -44,21 +44,30 @@ export function handlerLink(options?: MagicLinkHandlerLinkOptions): MagicLinkHan
     handler(content: string) {
       const parts = content.split('|').map(i => i.trim())
       let text = parts[0]
-      const url = parts.length > 1
+      let url: string | undefined = parts.length > 1
         ? parts[1]
-        : (text ? options?.linksMap?.[text] : undefined) || parts[0]
+        : undefined
       const type = 'link'
+      let imageUrl: string | undefined
 
-      if (!url.match(/^https?:\/\//))
+      let linkDefaults = text ? options?.linksMap?.[text] : undefined
+      if (typeof linkDefaults === 'string')
+        linkDefaults = { link: linkDefaults }
+
+      url ||= linkDefaults?.link || parts[0]
+      imageUrl ||= linkDefaults?.imageUrl
+
+      if (!url?.match(/^https?:\/\//))
         return false
 
       text ||= url.replace(reHtmlProtocol, '')
+      imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(url || '').hostname}`
 
       return {
         text,
         link: url,
         type,
-        imageUrl: `https://favicon.yandex.net/favicon/${new URL(url || '').hostname}`,
+        imageUrl,
       }
     },
   }
@@ -135,7 +144,7 @@ export default function MarkdownItMagicLink(md: MarkdownIt, options: MarkdownItM
       resolved.imageUrl ||= `https://favicon.yandex.net/favicon/${new URL(resolved.link || '').hostname}`
 
       for (const [regex, value] of options.imageOverrides || []) {
-        if (resolved.link.match(regex)) {
+        if (typeof regex === 'string' ? resolved.link === regex : resolved.link.match(regex)) {
           resolved.imageUrl = value
           break
         }

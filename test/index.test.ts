@@ -48,6 +48,24 @@ it('links map', () => {
     `)
 })
 
+it('links map with image', () => {
+  const md = MarkdownIt()
+  md.use(MarkdownItMagicLink, {
+    linksMap: {
+      VueUse: { link: 'https://vueuse.org/1', imageUrl: 'https://example.com/favicon1.png' },
+    },
+  })
+
+  const result = md.render([
+    'A {VueUse} Bar',
+  ].join('\n'))
+  expect(result)
+    .toMatchInlineSnapshot(`
+      "<p>A <a href="https://vueuse.org/1" class="markdown-magic-link markdown-magic-link-link"><span class="markdown-magic-link-image" style="background-image: url('https://example.com/favicon1.png');"></span>VueUse</a> Bar</p>
+      "
+    `)
+})
+
 it('imageOverrides', () => {
   const md = MarkdownIt()
   md.use(MarkdownItMagicLink, {
