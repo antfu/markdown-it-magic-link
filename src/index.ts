@@ -38,6 +38,16 @@ export interface MarkdownItMagicLinkOptions extends MagicLinkHandlerLinkOptions 
   imageOverrides?: [RegExp | string, string][]
 }
 
+const GITHUB_SPECIAL_ROUTES = [
+  'settings',
+  'pulls',
+  'issues',
+  'discussions',
+  'sponsor',
+  'sponsors',
+  'notifications',
+]
+
 export function handlerLink(options?: MagicLinkHandlerLinkOptions): MagicLinkHandler {
   return {
     name: 'link',
@@ -93,8 +103,11 @@ export function handlerGitHubAt(): MagicLinkHandler {
       }
     },
     postprocess(parsed: ResolvedMagicLink) {
-      if (parsed.link.match(reGitHubScope) && parsed.type !== 'github-at')
-        parsed.imageUrl = `https://github.com/${parsed.link.match(reGitHubScope)![1]}.png`
+      if (parsed.link.match(reGitHubScope) && parsed.type !== 'github-at') {
+        const login = parsed.link.match(reGitHubScope)![1]
+        if (!GITHUB_SPECIAL_ROUTES.includes(login))
+          parsed.imageUrl = `https://github.com/${login}.png`
+      }
     },
   }
 }
