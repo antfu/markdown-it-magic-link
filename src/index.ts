@@ -2,7 +2,7 @@ import type MarkdownIt from 'markdown-it'
 
 const reCapture = /^\{([^\{\}\n]*?)\}([^\[\]\{\}\(\)]|$)/i
 const reHtmlProtocol = /^https?:\/\//i
-const reGitHubScope = /^(?:https?:\/\/)?github\.com\/([^/]*?)(?:$|\/)/
+const reGitHubScope = /^(?:https?:\/\/)?github\.com\/([\w_-]*?)(?:$|\/)/
 
 export interface ParsedMagicLink {
   text?: string
@@ -88,16 +88,17 @@ export function handlerGitHubAt(): MagicLinkHandler {
     name: 'github-at',
     handler(content: string) {
       const parts = content.split('|').map(i => i.trim())
-      const text = parts.length > 1 ? parts[0] : undefined
-      const body = parts.length > 1 ? parts[1] : parts[0]
+      const loginAt = parts[0]
+      const text = parts[1]
+      const link = parts[2]
 
-      if (!body.match(/^@/))
+      if (!loginAt.startsWith('@'))
         return false
 
-      const login = body.slice(1)
+      const login = loginAt.slice(1)
       return {
-        text: text || login,
-        link: `https://github.com/${login}`,
+        text: text || login.toUpperCase(),
+        link: link || `https://github.com/${login}`,
         type: 'github-at',
         imageUrl: `https://github.com/${login}.png`,
       }
@@ -105,7 +106,7 @@ export function handlerGitHubAt(): MagicLinkHandler {
     postprocess(parsed: ResolvedMagicLink) {
       if (parsed.link.match(reGitHubScope) && parsed.type !== 'github-at') {
         const login = parsed.link.match(reGitHubScope)![1]
-        if (!GITHUB_SPECIAL_ROUTES.includes(login))
+        if (!GITHUB_SPECIAL_ROUTES.includes(login) && parsed.imageUrl.startsWith('https://favicon.yandex.net'))
           parsed.imageUrl = `https://github.com/${login}.png`
       }
     },

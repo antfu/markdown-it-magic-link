@@ -14,7 +14,7 @@ it('basic', () => {
 
   expect(result)
     .toMatchInlineSnapshot(`
-      "<p>Foo <a href="https://github.com/github" class="markdown-magic-link markdown-magic-link-github-at"><span class="markdown-magic-link-image" style="background-image: url('https://github.com/github.png');"></span>github</a> Bar</p>
+      "<p>Foo <a href="https://github.com/github" class="markdown-magic-link markdown-magic-link-github-at"><span class="markdown-magic-link-image" style="background-image: url('https://github.com/github.png');"></span>GITHUB</a> Bar</p>
       <p>Foo <a href="https://vueuse.org" class="markdown-magic-link markdown-magic-link-link"><span class="markdown-magic-link-image" style="background-image: url('https://favicon.yandex.net/favicon/vueuse.org');"></span>VueUse</a> Bar</p>
       "
     `)
@@ -87,6 +87,25 @@ it('imageOverrides', () => {
     .toMatchInlineSnapshot(`
       "<p>A <a href="https://vueuse.org/1" class="markdown-magic-link markdown-magic-link-link"><span class="markdown-magic-link-image" style="background-image: url('https://example.com/favicon1.png');"></span>VueUse</a> Bar</p>
       <p>B <a href="https://vueuse.org/anything" class="markdown-magic-link markdown-magic-link-link"><span class="markdown-magic-link-image" style="background-image: url('https://example.com/favicon2.png');"></span>VueUse</a> Bar</p>
+      "
+    `)
+})
+
+it('github link', () => {
+  const md = MarkdownIt()
+  md.use(MarkdownItMagicLink)
+
+  const result = md.render([
+    '{@antfu}',
+    '{@antfu|Anthony}',
+    '{@antfu|Anthony|https://github.com/antfu?tab=sponsoring}',
+  ].join('\n'))
+
+  expect(result)
+    .toMatchInlineSnapshot(`
+      "<p><a href="https://github.com/antfu" class="markdown-magic-link markdown-magic-link-github-at"><span class="markdown-magic-link-image" style="background-image: url('https://github.com/antfu.png');"></span>ANTFU</a>
+      <a href="https://github.com/antfu" class="markdown-magic-link markdown-magic-link-github-at"><span class="markdown-magic-link-image" style="background-image: url('https://github.com/antfu.png');"></span>Anthony</a>
+      <a href="https://github.com/antfu?tab=sponsoring" class="markdown-magic-link markdown-magic-link-github-at"><span class="markdown-magic-link-image" style="background-image: url('https://github.com/antfu.png');"></span>Anthony</a></p>
       "
     `)
 })
